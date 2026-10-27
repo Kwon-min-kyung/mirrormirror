@@ -1,0 +1,1907 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mirror mirror..</title>
+
+<style>
+
+@font-face {
+    font-family: 'UnShinmun';
+    src: url('./UnShinmun.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+:root {
+    --text-primary: #1a1a1a;
+    --text-glow: rgba(255, 255, 255, 0.8);
+    --gold-accent: #c4a974;
+    --antique-dark: #0a0a0c;
+}
+
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: black;
+    font-family: 'UnShinmun', serif;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* --- 상단 글로벌 사운드 컨트롤 --- */
+.sound-toggle {
+    position: fixed;
+    top: 22px;
+    right: 25px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: black;
+    border: 0px solid rgba(196, 169, 116, 0.4);
+    border-radius: 20px;
+    color: white;
+    font-family: 'UnShinmun', serif;
+    font-size: 14px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: all 0.3s ease;
+    
+}
+
+.sound-toggle:hover {
+    background: white;
+    border-color: rgba(196, 169, 116, 0.8);
+    transform: translateY(-1px);
+    color: black;
+    box-shadow: 0 6px 20px rgba(196, 169, 116, 0.2);
+}
+
+.sound-icon {
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+
+/* --- 공통 화면 레이아웃 --- */
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    padding: 15px 20px;
+    text-align: center;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease;
+}
+
+/* --- 상단 텍스트 영역 (voice.png 제거 후 깔끔한 타이포그래피) --- */
+.header-banner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 900px;
+    margin-bottom: clamp(10px, 1.8vh, 18px);
+    padding: 6px 16px;
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+.banner-title {
+    position: relative;
+    margin: 0;
+    font-size: clamp(20px, 2.3vw, 29px);
+    font-weight: normal;
+    letter-spacing: 2px;
+    text-align: center;
+    line-height: 1.35;
+    transition: color 0.4s ease, text-shadow 0.4s ease;
+}
+
+/* 화면별 배경색과의 조화 및 가독성 확보 (배경색과 겹침/묻힘 방지) */
+#screen1 .banner-title {
+    color: white;
+    
+}
+
+#screen2 .banner-title,
+#screen3 .banner-title {
+    color: black;
+    
+}
+
+#screen4 .banner-title {
+    color: white;
+    
+}
+
+#screen5 .banner-title {
+    color: white;
+    
+}
+
+/* --- screen1: 신비로운 미스터리 룸 & 입체 3D 손거울 --- */
+#screen1 {
+    justify-content: space-between;
+    padding: 30px 20px;
+   
+    perspective: 1200px;
+}
+
+/* 화면 1 부유하는 먼지 파티클 캔버스 */
+#dustCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.65;
+}
+
+.mirror-3d-wrapper {
+    position: relative;
+    z-index: 10;
+    perspective: 1000px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.mirror-container-s1 {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 380px;
+    max-width: 85vw;
+    height: 504px;
+    max-height: 54vh;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1), filter 0.3s ease;
+    filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.6));
+}
+
+.mirror-container-s1:hover {
+   
+}
+
+.webcam-s1 {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    clip-path: ellipse(36% 43% at 50% 50%);
+    filter: blur(12px) brightness(0.85) contrast(1.1);
+    transform: scaleX(-1);
+    z-index: 1;
+    transition: filter 0.5s ease;
+}
+
+/* 거울 서리 닦기 캔버스 */
+#frostCanvas {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    clip-path: ellipse(36% 43% at 50% 50%);
+    z-index: 2;
+    pointer-events: auto;
+}
+
+/* 거울 유리 빛 반사(Specular Sheen) */
+.glass-sheen {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    clip-path: ellipse(36% 43% at 50% 50%);
+    z-index: 3;
+    pointer-events: none;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.03) 40%, transparent 60%);
+    mix-blend-mode: overlay;
+    transition: opacity 0.3s ease;
+}
+
+.mirror {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    z-index: 4;
+    pointer-events: none;
+}
+
+.s1-footer {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.s1-subtext {
+    margin: 0;
+    font-size: 20px;
+    color: white;
+    letter-spacing: 2px;
+    animation: pulseText 2.6s ease-in-out infinite alternate;
+}
+
+.s1-hint {
+    margin: 0;
+    font-size: 13px;
+    color: white;
+    letter-spacing: 1px;
+}
+
+@keyframes pulseText {
+    0% { opacity: 0.65; transform: translateY(0); }
+    100% { opacity: 1; transform: translateY(-2px); }
+}
+
+/* --- screen2 ~ 5 공통 레이아웃 (순차적 어둠 및 왜곡 심화) --- */
+#screen2 {
+    background: url('back.png') no-repeat center center;
+    background-size: cover;
+}
+
+#screen3 {
+    background: url('back.png') no-repeat center center;
+    background-size: cover;
+    filter: contrast(1.05);
+}
+
+#screen4 {
+    background: linear-gradient(rgba(10, 10, 15, 0.35), rgba(10, 10, 15, 0.55)), url('back.png') no-repeat center center;
+    background-size: cover;
+    filter: contrast(1.15) brightness(0.9);
+}
+
+#screen5 {
+    background: url('back2.png') no-repeat center center;
+    background-size: cover;
+}
+
+.content-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    width: min(92vw, 1150px);
+    flex: 0 1 auto;
+}
+
+.mirror-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1.7 / 1;
+    margin: 0;
+    padding: 0;
+    line-height: 0;
+    z-index: 10;
+    transition: transform 0.3s ease;
+}
+
+.camera-area {
+    position: absolute;
+    top: 19%;
+    left: 7%;
+    width: 86%;
+    height: 70%;
+    background: #08080a;
+    border-radius: 48% 48% 3% 3% / 38% 38% 3% 3%;
+    overflow: hidden;
+    z-index: 1;
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.render-canvas {
+    display: none;
+    width: 100%;
+    height: 100%;
+}
+
+.cameraText-style {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    transform: translate(-50%, -50%);
+    color: #888;
+    font-size: 22px;
+    font-family: 'UnShinmun', serif;
+    letter-spacing: 1px;
+}
+
+.frame-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    z-index: 2;
+    pointer-events: none;
+    display: block;
+   
+}
+
+/* 거울 균열 캔버스 (엔딩용) */
+#crackCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3;
+    pointer-events: none;
+}
+
+/* --- 하단 텍스트박스 --- */
+.dialogue-box {
+    position: relative;
+    width: 100%;
+    height: clamp(110px, 11.5vw, 145px);
+    padding: 0 50px;
+    margin-top: -40px;
+    z-index: 20;
+    background: url('textbox.png') no-repeat center center;
+    background-size: 100% 100%;
+    background-color: transparent;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'UnShinmun', serif;
+    font-size: clamp(18px, 2.1vw, 25px);
+    transition: filter 0.3s ease;
+}
+
+.dialogue-left {
+    text-align: left;
+    max-width: 52%;
+    word-break: keep-all;
+    min-height: 1.5em;
+    display: flex;
+    align-items: center;
+}
+
+.typewriter-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: currentColor;
+    margin-left: 4px;
+    animation: blink 0.8s infinite;
+    vertical-align: text-bottom;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+.dialogue-right {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    max-width: 48%;
+}
+
+.choice-item {
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    opacity: 0.85;
+}
+
+.choice-item:hover {
+    opacity: 1;
+    transform: translateX(4px);
+    color: #8b1111;
+}
+
+#screen5 .choice-item:hover {
+    color: #ff4d4d;
+}
+
+@media (max-width: 768px) {
+    .dialogue-box {
+        margin-top: -25px;
+        padding: 0 25px;
+        font-size: 16px;
+    }
+}
+
+/* --- 엔딩 모달 / 오버레이 --- */
+.ending-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2000;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ending-overlay.show {
+    display: flex;
+    opacity: 1;
+}
+
+.ending-overlay.trapped {
+    background: radial-gradient(circle at 50% 50%, rgba(40, 0, 0, 0.95) 0%, rgba(10, 0, 0, 0.98) 100%);
+    color: #ffcccc;
+}
+
+.ending-overlay.escaped {
+    background: radial-gradient(circle at 50% 50%, rgba(20, 25, 35, 0.95) 0%, rgba(5, 8, 12, 0.98) 100%);
+    color: #f2ece1;
+}
+
+.ending-content {
+    max-width: 650px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.ending-title {
+    font-size: clamp(28px, 4vw, 44px);
+    font-weight: normal;
+    letter-spacing: 3px;
+    margin: 0;
+}
+
+.ending-desc {
+    font-size: clamp(17px, 2.2vw, 22px);
+    line-height: 1.8;
+    margin: 0;
+    word-break: keep-all;
+    opacity: 0.9;
+}
+
+.ending-btn {
+    margin-top: 15px;
+    padding: 12px 32px;
+    font-family: 'UnShinmun', serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    background: transparent;
+    border: 1px solid currentColor;
+    color: inherit;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ending-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.05);
+}
+
+/* 화면 전환 애니메이션 (1->2 전용) */
+#screen1.zoom-in {
+    animation: mirrorZoom 1.2s cubic-bezier(0.65, 0, 0.9, 0.4) forwards;
+}
+
+@keyframes mirrorZoom {
+    0% {
+        transform: scale(1);
+        filter: blur(0);
+        opacity: 1;
+    }
+    30% {
+        transform: scale(1.12);
+        filter: blur(0);
+        opacity: 1;
+    }
+    65% {
+        transform: scale(2.8);
+        filter: blur(4px);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(10);
+        filter: blur(20px);
+        opacity: 0;
+    }
+}
+
+.screen.appear {
+    animation: cameraAppear 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes cameraAppear {
+    0% {
+        opacity: 0;
+        filter: blur(14px) brightness(1.3);
+        transform: scale(1.08);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0) brightness(1);
+        transform: scale(1);
+    }
+}
+
+/* 화면 전환 시 섬뜩한 플래시 */
+.eerie-flash {
+    animation: screenDistort 0.4s ease-out;
+}
+
+@keyframes screenDistort {
+    0% { filter: invert(0.8) hue-rotate(90deg) contrast(1.5); }
+    50% { filter: invert(0.4) hue-rotate(180deg) contrast(2); }
+    100% { filter: none; }
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- 글로벌 사운드 컨트롤 -->
+<button id="soundToggle" class="sound-toggle" onclick="toggleSound()">
+    
+    <span id="soundText">sound on</span>
+</button>
+
+<!-- 화면 1 : 신비로운 손거울 룸 -->
+<div class="screen" id="screen1" style="display: flex;">
+    <canvas id="dustCanvas"></canvas>
+
+    <div class="header-banner">
+        <h1 class="banner-title">거울님은 오직 진실만을 말하십니다.</h1>
+    </div>
+
+    <div class="mirror-3d-wrapper" id="mirrorWrapper">
+        <div class="mirror-container-s1" id="mirrorContainer" onclick="showCamera()">
+            <video id="webcam1" class="webcam-s1" autoplay muted playsinline></video>
+            <canvas id="frostCanvas"></canvas>
+            <div class="glass-sheen"></div>
+            <img src="mir.png" class="mirror" alt="거울">
+        </div>
+    </div>
+
+    <div class="s1-footer" onclick="showCamera()" style="cursor: pointer;">
+        <p class="s1-subtext">거울을 들여다 보세요.</p>
+        <span class="s1-hint">마우스로 거울의 서리를 닦아낸 후 클릭하세요.</span>
+    </div>
+</div>
+
+<!-- 화면 2 : 기본 원본 -->
+<div class="screen" id="screen2" style="display: none;">
+    <div class="header-banner">
+        <h1 class="banner-title">거울님이 말씀하십니다.</h1>
+    </div>
+
+    <div class="content-wrapper">
+        <div class="mirror-frame">
+            <div class="camera-area" onmousemove="triggerRippleMove(event, 2)" onclick="triggerRippleClick(event, 2)">
+                <canvas id="canvas2" class="render-canvas"></canvas>
+                <div id="cameraText2" class="cameraText-style">웹캠을 준비 중입니다...</div>
+            </div>
+            <img src="frame.png" class="frame-image" alt="거울 프레임">
+        </div>
+
+        <div class="dialogue-box">
+            <div class="dialogue-left" id="diag2" onclick="completeCurrentDialogue()">
+                <span class="dialogue-text"></span><span class="typewriter-cursor"></span>
+            </div>
+            <div class="dialogue-right">
+                <div class="choice-item" onmouseenter="playChime()" onclick="goToScreen1()">▶ &nbsp; 고마워요 거울님!</div>
+                <div class="choice-item" onmouseenter="playChime()" onclick="goToScreen(3)">▶ &nbsp; 한번 더 듣고 싶어요!</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 화면 3 : 슬릿 스캔 왜곡 -->
+<div class="screen" id="screen3" style="display: none;">
+    <div class="header-banner">
+        <h1 class="banner-title">거울님이 당신을 주시하고 있어요.</h1>
+    </div>
+
+    <div class="content-wrapper">
+        <div class="mirror-frame">
+            <div class="camera-area" onmousemove="triggerRippleMove(event, 3)" onclick="triggerRippleClick(event, 3)">
+                <canvas id="canvas3" class="render-canvas"></canvas>
+                <div id="cameraText3" class="cameraText-style">웹캠을 준비 중입니다...</div>
+            </div>
+            <img src="frame.png" class="frame-image" alt="거울 프레임">
+        </div>
+
+        <div class="dialogue-box">
+            <div class="dialogue-left" id="diag3" onclick="completeCurrentDialogue()">
+                <span class="dialogue-text"></span><span class="typewriter-cursor"></span>
+            </div>
+            <div class="dialogue-right">
+                <div class="choice-item" onmouseenter="playChime()" onclick="goToScreen1()">▶ &nbsp; 하하, 칭찬이 과하시네요!</div>
+                <div class="choice-item" onmouseenter="playChime()" onclick="goToScreen(4)">▶ &nbsp; 조금 더 듣고 싶어요. 한번만 더!</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 화면 4 : 더 강해진 슬릿 스캔 + 웨이브 굴절 -->
+<div class="screen" id="screen4" style="display: none;">
+    <div class="header-banner">
+        <h1 class="banner-title">거울님의 말씀에 귀 기울이세요.</h1>
+    </div>
+
+    <div class="content-wrapper">
+        <div class="mirror-frame">
+            <div class="camera-area" onmousemove="triggerRippleMove(event, 4)" onclick="triggerRippleClick(event, 4)">
+                <canvas id="canvas4" class="render-canvas"></canvas>
+                <div id="cameraText4" class="cameraText-style">웹캠을 준비 중입니다...</div>
+            </div>
+            <img src="frame.png" class="frame-image" alt="거울 프레임">
+        </div>
+
+        <div class="dialogue-box">
+            <div class="dialogue-left" id="diag4" onclick="completeCurrentDialogue()">
+                <span class="dialogue-text"></span><span class="typewriter-cursor"></span>
+            </div>
+            <div class="dialogue-right">
+                <div class="choice-item" onmouseenter="playChime()" onclick="goToScreen1()">▶ &nbsp; 거울 앞을 떠나겠어요.</div>
+                <div class="choice-item" onmouseenter="playChime()" onclick="goToScreen(5)">▶ &nbsp; 조금만 더요!</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 화면 5 : 강한 슬릿 스캔 + 미니 모자이크 깜빡임 + 광기 -->
+<div class="screen" id="screen5" style="display: none;">
+    <div class="header-banner">
+        <h1 class="banner-title">아직도 거울님을 보고 있나요?</h1>
+    </div>
+
+    <div class="content-wrapper">
+        <div class="mirror-frame">
+            <div class="camera-area" onmousemove="triggerRippleMove(event, 5)" onclick="triggerRippleClick(event, 5)">
+                <canvas id="canvas5" class="render-canvas"></canvas>
+                <div id="cameraText5" class="cameraText-style">웹캠을 준비 중입니다...</div>
+            </div>
+            <img src="frame.png" class="frame-image" alt="거울 프레임">
+            <canvas id="crackCanvas"></canvas>
+        </div>
+
+        <div class="dialogue-box">
+            <div class="dialogue-left" id="diag5" onclick="completeCurrentDialogue()">
+                <span class="dialogue-text"></span><span class="typewriter-cursor"></span>
+            </div>
+            <div class="dialogue-right">
+                <div class="choice-item" onmouseenter="playChime()" onclick="triggerEnding('escape')">▶ &nbsp; 거울 앞을 떠나겠어요!</div>
+                <div class="choice-item" onmouseenter="playChime()" onclick="triggerEnding('crack')">▶ &nbsp; 이제는 그만둘 수 없어</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 엔딩 오버레이 1: 거울에 영혼이 갇힘 -->
+<div id="endingTrapped" class="ending-overlay trapped">
+    <div class="ending-content">
+        <h2 class="ending-title">타이틀</h2>
+        <p class="ending-desc">
+            내용
+        </p>
+        <button class="ending-btn" onclick="resetToBeginning()">처음으로</button>
+    </div>
+</div>
+
+<!-- 엔딩 오버레이 2: 현실로 탈출 -->
+<div id="endingEscaped" class="ending-overlay escaped">
+    <div class="ending-content">
+        <h2 class="ending-title">타이틀2</h2>
+        <p class="ending-desc">
+            내용
+            <span style="font-style: italic; opacity: 0.8;">내용</span>
+        </p>
+        <button class="ending-btn" onclick="resetToBeginning()">처음으로</button>
+    </div>
+</div>
+
+<audio id="bgmAudio" src="evilqueen.mp3" preload="auto" playsinline></audio>
+<video id="hiddenVideo" autoplay muted playsinline style="display:none;"></video>
+
+<script>
+
+/* =====================================================================
+   1. BGM (evilqueen.mp3) 매니저 & WEB AUDIO API SFX
+   ===================================================================== */
+let audioCtx = null;
+let soundEnabled = true;
+
+// 배경음악 (evilqueen.mp3) 관리 객체
+const bgmAudio = document.getElementById("bgmAudio") || new Audio('evilqueen.mp3');
+bgmAudio.preload = 'auto';
+bgmAudio.playsinline = true;
+
+const BGM_TARGET_VOLUME = 0.55;  // 기본 타겟 볼륨
+const BGM_FADE_OUT_SEC = 10;     // 마지막 10초 서서히 페이드아웃
+const BGM_FADE_IN_SEC = 3;       // 시작 시 3초간 자연스러운 페이드인
+let bgmLoopMonitorId = null;
+
+// BGM 재생 시작
+function startBgm() {
+    if (!soundEnabled) return;
+    bgmAudio.play().then(() => {
+        startBgmLoopMonitor();
+    }).catch(() => {
+        // 브라우저 자동재생 정책으로 차단된 경우, 첫 클릭 인터랙션 시 자동 재생됨
+    });
+}
+
+// BGM 일시정지
+function stopBgm() {
+    bgmAudio.pause();
+    if (bgmLoopMonitorId) {
+        cancelAnimationFrame(bgmLoopMonitorId);
+        bgmLoopMonitorId = null;
+    }
+}
+
+// BGM 볼륨 부드러운 페이드아웃 & 자연스러운 루프 제어
+function updateBgmVolume() {
+    if (!soundEnabled) {
+        bgmAudio.volume = 0;
+        return;
+    }
+    const duration = bgmAudio.duration;
+    if (!duration || isNaN(duration)) {
+        bgmAudio.volume = BGM_TARGET_VOLUME;
+        return;
+    }
+
+    const cur = bgmAudio.currentTime;
+    const timeLeft = duration - cur;
+
+    // 1) 마지막 10초: 서서히 볼륨을 0으로 줄임
+    if (timeLeft <= BGM_FADE_OUT_SEC) {
+        const fadeRatio = Math.max(0, timeLeft / BGM_FADE_OUT_SEC);
+        bgmAudio.volume = BGM_TARGET_VOLUME * fadeRatio;
+
+        // 트랙 끝에 도달하기 직전(0.12초 전)에 부드럽게 처음(0초)으로 되감아 루프
+        if (timeLeft <= 0.12) {
+            bgmAudio.currentTime = 0;
+            bgmAudio.play().catch(() => {});
+        }
+    }
+    // 2) 처음 3초: 0에서 타겟 볼륨까지 자연스럽게 볼륨이 커지며 시작
+    else if (cur < BGM_FADE_IN_SEC) {
+        const fadeRatio = Math.min(1, Math.max(0, cur / BGM_FADE_IN_SEC));
+        bgmAudio.volume = BGM_TARGET_VOLUME * fadeRatio;
+    }
+    // 3) 그 외 메인 재생 구간: 설정된 타겟 볼륨 유지
+    else {
+        bgmAudio.volume = BGM_TARGET_VOLUME;
+    }
+}
+
+// 고성능 60fps 볼륨 모니터링 루프
+function startBgmLoopMonitor() {
+    if (bgmLoopMonitorId) return;
+    function monitor() {
+        if (!bgmAudio.paused) {
+            updateBgmVolume();
+        }
+        bgmLoopMonitorId = requestAnimationFrame(monitor);
+    }
+    bgmLoopMonitorId = requestAnimationFrame(monitor);
+}
+
+// 백그라운드 탭 대비 timeupdate 및 ended 이벤트 보조 리스너
+bgmAudio.addEventListener('timeupdate', updateBgmVolume);
+bgmAudio.addEventListener('ended', () => {
+    bgmAudio.currentTime = 0;
+    if (soundEnabled) {
+        bgmAudio.play().catch(() => {});
+    }
+});
+
+function initAudio() {
+    if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) {
+            audioCtx = new AudioContextClass();
+        }
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    if (soundEnabled && bgmAudio.paused) {
+        startBgm();
+    }
+}
+
+function updateAmbientForScreen(stage) {
+    // 배경음악(evilqueen.mp3)이 재생 중이므로 화면 전환 시에도 끊김 없이 유지됩니다.
+}
+
+// 맑은 앤틱 와인글라스 챠임 SFX
+function playChime() {
+    if (!soundEnabled) return;
+    if (!audioCtx) initAudio();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = 'sine';
+    const freqs = [880, 1046.5, 1318.5, 1760];
+    const f = freqs[Math.floor(Math.random() * freqs.length)];
+    osc.frequency.setValueAtTime(f, t);
+
+    gain.gain.setValueAtTime(0.08, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start(t);
+    osc.stop(t + 0.9);
+}
+
+// 거울 속으로 빨려 들어가는 시네마틱 스웰 SFX
+function playMirrorEntrySound() {
+    if (!soundEnabled) return;
+    if (!audioCtx) initAudio();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(110, t);
+    osc.frequency.exponentialRampToValueAtTime(440, t + 1.1);
+
+    gain.gain.setValueAtTime(0.02, t);
+    gain.gain.linearRampToValueAtTime(0.25, t + 0.7);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 1.3);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start(t);
+    osc.stop(t + 1.3);
+}
+
+// 타이핑 서걱거림 SFX
+function playTypeSound() {
+    if (!soundEnabled || !audioCtx) return;
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(180 + Math.random() * 80, t);
+
+    gain.gain.setValueAtTime(0.025, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start(t);
+    osc.stop(t + 0.04);
+}
+
+// 거울 균열 파열음 SFX
+function playGlassShatterSound() {
+    if (!soundEnabled) return;
+    if (!audioCtx) initAudio();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    const t = audioCtx.currentTime;
+    
+    // 1) 고음 파열음 3중 화음
+    [1200, 1850, 2400, 3100].forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq + Math.random() * 200, t + idx * 0.03);
+        osc.frequency.exponentialRampToValueAtTime(200, t + 0.8 + idx * 0.1);
+
+        gain.gain.setValueAtTime(0.12, t + idx * 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.9 + idx * 0.1);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t + idx * 0.03);
+        osc.stop(t + 1.2);
+    });
+
+    // 2) 저음 충격음
+    const boom = audioCtx.createOscillator();
+    const boomGain = audioCtx.createGain();
+    boom.type = 'sine';
+    boom.frequency.setValueAtTime(140, t);
+    boom.frequency.exponentialRampToValueAtTime(28, t + 1.5);
+    boomGain.gain.setValueAtTime(0.4, t);
+    boomGain.gain.exponentialRampToValueAtTime(0.001, t + 1.5);
+    boom.connect(boomGain);
+    boomGain.connect(audioCtx.destination);
+    boom.start(t);
+    boom.stop(t + 1.5);
+}
+
+// 맑고 영롱한 물방울 파장 SFX ('퐁-' 하는 수면 낙하음)
+function playWaterDropSound() {
+    if (!soundEnabled) return;
+    if (!audioCtx) initAudio();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = 'sine';
+    const baseFreq = 480 + Math.random() * 60;
+    osc.frequency.setValueAtTime(baseFreq, t);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.9, t + 0.08);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.8, t + 0.35);
+
+    gain.gain.setValueAtTime(0.001, t);
+    gain.gain.linearRampToValueAtTime(0.12, t + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.42);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start(t);
+    osc.stop(t + 0.42);
+}
+
+// 사운드 토글
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    const btnText = document.getElementById("soundText");
+    const icon = document.getElementById("soundIcon");
+    if (soundEnabled) {
+        initAudio();
+        startBgm();
+        btnText.textContent = "sound on";
+        
+    } else {
+        stopBgm();
+        btnText.textContent = "sound off";
+       
+    }
+}
+
+/* =====================================================================
+   2. 전역 상태 & 변수
+   ===================================================================== */
+let stream = null;
+let isTransitioning = false;
+let currentScreenNum = 1;
+let animFrameId = null;
+
+let frameHistory = [];
+const maxHistoryFrames = 50;
+
+let isFaceMosaicOn = false;
+let mosaicTimer = null;
+
+// 대사 타이핑 타이머
+let typeTimer = null;
+
+const dialogues = {
+    2: "▶ &nbsp; 수려한 얼굴을 가졌구나.",
+    3: "▶ &nbsp; 코가 장인이 심혈을 기울여 만든 조각상의 코처럼 아름답구나.",
+    4: "▶ &nbsp; 당신의 얼굴로 태어났다면 좋았을텐데.",
+    5: "▶ &nbsp; 제발, 당신의 얼굴을 갖기 위해서라면 독사과라도 삼키겠어요!!"
+};
+
+/* =====================================================================
+   3. 화면 1 : 부유 먼지 파티클 & 거울 3D 틸트 & 서리 닦기
+   ===================================================================== */
+function initDustParticles() {
+    const canvas = document.getElementById("dustCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let w = canvas.width = window.innerWidth;
+    let h = canvas.height = window.innerHeight;
+
+    window.addEventListener("resize", () => {
+        w = canvas.width = window.innerWidth;
+        h = canvas.height = window.innerHeight;
+    });
+
+    const particles = [];
+    const count = 55;
+    for (let i = 0; i < count; i++) {
+        particles.push({
+            x: Math.random() * w,
+            y: Math.random() * h,
+            r: Math.random() * 2.2 + 0.6,
+            dx: (Math.random() - 0.5) * 0.4,
+            dy: -Math.random() * 0.45 - 0.1,
+            alpha: Math.random() * 0.6 + 0.2
+        });
+    }
+
+    function renderDust() {
+        if (currentScreenNum === 1) {
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = "rgba(220, 210, 185, 0.7)";
+            particles.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(220, 210, 185, ${p.alpha})`;
+                ctx.fill();
+
+                p.x += p.dx;
+                p.y += p.dy;
+                if (p.y < 0) p.y = h;
+                if (p.x < 0) p.x = w;
+                if (p.x > w) p.x = 0;
+            });
+        }
+        requestAnimationFrame(renderDust);
+    }
+    renderDust();
+}
+
+// 손거울 마우스 3D 틸트
+function initMirrorTilt() {
+    const wrapper = document.getElementById("screen1");
+    const mirror = document.getElementById("mirrorContainer");
+    if (!wrapper || !mirror) return;
+
+    wrapper.addEventListener("mousemove", (e) => {
+        if (currentScreenNum !== 1 || isTransitioning) return;
+        const rect = mirror.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const deltaX = (e.clientX - centerX) / (window.innerWidth / 2);
+        const deltaY = (e.clientY - centerY) / (window.innerHeight / 2);
+
+        const rotateX = -deltaY * 12;
+        const rotateY = deltaX * 14;
+        mirror.style.transform = `rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale(1.02)`;
+    });
+
+    wrapper.addEventListener("mouseleave", () => {
+        if (mirror) mirror.style.transform = `rotateX(0deg) rotateY(0deg) scale(1)`;
+    });
+}
+
+// 거울 서리 닦기(Fog Wipe) 캔버스
+function initFrostCanvas() {
+    const canvas = document.getElementById("frostCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+
+    function resizeFrost() {
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width || 380;
+        canvas.height = rect.height || 504;
+        drawInitialFrost();
+    }
+
+    function drawInitialFrost() {
+        const cw = canvas.width;
+        const ch = canvas.height;
+        ctx.globalCompositeOperation = "source-over";
+        ctx.fillStyle = "rgba(225, 230, 240, 0.48)";
+        ctx.fillRect(0, 0, cw, ch);
+
+        // 부드러운 텍스처 입자
+        for (let i = 0; i < 600; i++) {
+            ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.15})`;
+            ctx.fillRect(Math.random() * cw, Math.random() * ch, 2, 2);
+        }
+    }
+
+    resizeFrost();
+    window.addEventListener("resize", resizeFrost);
+
+    let isWiping = false;
+
+    function wipeAt(clientX, clientY) {
+        const rect = canvas.getBoundingClientRect();
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+
+        ctx.globalCompositeOperation = "destination-out";
+        const rad = 38;
+        const grad = ctx.createRadialGradient(x, y, rad * 0.2, x, y, rad);
+        grad.addColorStop(0, "rgba(0,0,0,1)");
+        grad.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(x, y, rad, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    canvas.addEventListener("mousedown", (e) => { isWiping = true; wipeAt(e.clientX, e.clientY); });
+    canvas.addEventListener("mousemove", (e) => {
+        wipeAt(e.clientX, e.clientY); // 호버만 해도 은은하게 닦임
+    });
+    window.addEventListener("mouseup", () => { isWiping = false; });
+
+    canvas.addEventListener("click", () => {
+        showCamera();
+    });
+
+    canvas.addEventListener("touchmove", (e) => {
+        if (e.touches[0]) wipeAt(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+}
+
+/* =====================================================================
+   4. 대사 타이핑 이펙트
+   ===================================================================== */
+function typeDialogue(diagContainerId, fullHtmlText) {
+    if (typeTimer) clearInterval(typeTimer);
+    const container = document.getElementById(diagContainerId);
+    if (!container) return;
+
+    const textSpan = container.querySelector(".dialogue-text");
+    if (!textSpan) return;
+
+    textSpan.innerHTML = "";
+    
+    // HTML 태그와 일반 텍스트 분리
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = fullHtmlText;
+    const plainText = tempDiv.textContent || tempDiv.innerText || "";
+
+    let idx = 0;
+    typeTimer = setInterval(() => {
+        if (idx < plainText.length) {
+            textSpan.textContent += plainText[idx];
+            if (idx % 2 === 0) playTypeSound();
+            idx++;
+        } else {
+            clearInterval(typeTimer);
+            typeTimer = null;
+        }
+    }, 45);
+}
+
+function completeCurrentDialogue() {
+    if (typeTimer && currentScreenNum >= 2 && currentScreenNum <= 5) {
+        clearInterval(typeTimer);
+        typeTimer = null;
+        const container = document.getElementById("diag" + currentScreenNum);
+        if (container) {
+            const textSpan = container.querySelector(".dialogue-text");
+            const tempDiv = document.createElement("div");
+            tempDiv.innerHTML = dialogues[currentScreenNum];
+            if (textSpan) {
+                textSpan.textContent = tempDiv.textContent || tempDiv.innerText || "";
+            }
+        }
+    }
+}
+
+/* =====================================================================
+   5. 웹캠 비율 유지 Cover 그리기 헬퍼
+   ===================================================================== */
+function getCoverRect(video, cw, ch) {
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    const videoRatio = vw / vh;
+    const canvasRatio = cw / ch;
+
+    let sx, sy, sw, sh;
+    if (canvasRatio > videoRatio) {
+        sw = vw;
+        sh = vw / canvasRatio;
+        sx = 0;
+        sy = (vh - sh) / 2;
+    } else {
+        sh = vh;
+        sw = vh * canvasRatio;
+        sx = (vw - sw) / 2;
+        sy = 0;
+    }
+    return { sx, sy, sw, sh, vw, vh };
+}
+
+/* =====================================================================
+   5-1. 수면 물방울 파장(Water Ripple) 인터랙션 & 렌더링
+   ===================================================================== */
+let ripples = [];
+let lastRippleTime = 0;
+let lastRipplePos = { x: 0, y: 0 };
+
+function getCanvasCoords(event, screenNum) {
+    const canvas = document.getElementById("canvas" + screenNum);
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    const x = (event.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (event.clientY - rect.top) * (canvas.height / rect.height);
+    return { x, y };
+}
+
+// 마우스 호버/이동 시 부드럽고 잔잔한 수면 잔물결 생성
+function triggerRippleMove(event, screenNum) {
+    const now = Date.now();
+    if (now - lastRippleTime < 140) return; // 너무 잦은 발생을 억제하여 차분한 템포 형성
+
+    const coords = getCanvasCoords(event, screenNum);
+    if (!coords) return;
+
+    const dist = Math.hypot(coords.x - lastRipplePos.x, coords.y - lastRipplePos.y);
+    if (dist < 26) return;
+
+    lastRippleTime = now;
+    lastRipplePos = coords;
+
+    ripples.push({
+        x: coords.x,
+        y: coords.y,
+        radius: 3,
+        maxRadius: 110,
+        speed: 0.85,     // 기존 2.2 -> 0.85로 아주 느릿하고 유려하게 퍼짐
+        alpha: 0.6,
+        decay: 0.0065,   // 잔물결이 은은하게 오래 머물며 퍼짐
+        waveWidth: 20,
+        strength: 9      // 부드럽고 자연스러운 수면 굴절
+    });
+}
+
+// 클릭 시 깊고 영롱한 물방울 파장과 '퐁-' 사운드 발동
+function triggerRippleClick(event, screenNum) {
+    const coords = getCanvasCoords(event, screenNum);
+    if (!coords) return;
+
+    // 우아하고 고요하게 퍼지는 1차 물방울 파장
+    ripples.push({
+        x: coords.x,
+        y: coords.y,
+        radius: 4,
+        maxRadius: 230,
+        speed: 1.15,     // 기존 3.4 -> 1.15로 느긋하고 웅장한 수면 파동
+        alpha: 0.9,
+        decay: 0.005,    // 서서히 물결치며 잦아듦
+        waveWidth: 28,
+        strength: 20     // 매끄럽고 깊이 있는 20px 실시간 영상 굴절
+    });
+
+    // 2차 지연 반사 파장 (여운을 주는 반사파)
+    setTimeout(() => {
+        ripples.push({
+            x: coords.x,
+            y: coords.y,
+            radius: 2,
+            maxRadius: 180,
+            speed: 0.95, // 2차 파장도 여유롭게
+            alpha: 0.65,
+            decay: 0.006,
+            waveWidth: 22,
+            strength: 12
+        });
+    }, 260); // 260ms 후 은은하게 뒤따르는 파동
+
+    playWaterDropSound();
+}
+
+// 실제 웹캠 영상 픽셀을 물리적으로 굴절/왜곡시키는 실시간 광학 파동 셰이더
+let rippleBuffer = null;
+let rippleBufferLength = 0;
+
+function applyWaterRippleRefraction(ctx, cw, ch) {
+    if (ripples.length === 0) return;
+
+    const imgData = ctx.getImageData(0, 0, cw, ch);
+    const src32 = new Uint32Array(imgData.data.buffer);
+
+    const totalPixels = cw * ch;
+    if (!rippleBuffer || rippleBufferLength !== totalPixels) {
+        rippleBuffer = new Uint32Array(totalPixels);
+        rippleBufferLength = totalPixels;
+    }
+    const tgt32 = rippleBuffer;
+    tgt32.set(src32);
+
+    let hasRefraction = false;
+
+    for (let i = 0; i < ripples.length; i++) {
+        const r = ripples[i];
+        if (r.alpha <= 0.05 || r.radius < 2) continue;
+
+        const currentStrength = r.strength * (1 - r.radius / r.maxRadius) * r.alpha;
+        if (currentStrength <= 0.2) continue;
+
+        hasRefraction = true;
+        const w = r.waveWidth;
+        const minX = Math.max(0, Math.floor(r.x - r.radius - w));
+        const maxX = Math.min(cw - 1, Math.ceil(r.x + r.radius + w));
+        const minY = Math.max(0, Math.floor(r.y - r.radius - w));
+        const maxY = Math.min(ch - 1, Math.ceil(r.y + r.radius + w));
+
+        const innerR = Math.max(0, r.radius - w);
+        const outerR = r.radius + w;
+        const innerRSq = innerR * innerR;
+        const outerRSq = outerR * outerR;
+
+        for (let py = minY; py <= maxY; py++) {
+            const dy = py - r.y;
+            const dySq = dy * dy;
+            const rowOffset = py * cw;
+
+            for (let px = minX; px <= maxX; px++) {
+                const dx = px - r.x;
+                const distSq = dx * dx + dySq;
+
+                if (distSq >= innerRSq && distSq <= outerRSq) {
+                    const dist = Math.sqrt(distSq);
+                    if (dist > 0.1) {
+                        // 물결의 경사도(Slope) 계산: 중심에서 바깥으로 파동 굴절
+                        const phase = (dist - r.radius) / w * Math.PI;
+                        const waveSlope = Math.sin(phase);
+                        const disp = waveSlope * currentStrength;
+
+                        const sx = Math.min(cw - 1, Math.max(0, Math.round(px + (dx / dist) * disp)));
+                        const sy = Math.min(ch - 1, Math.max(0, Math.round(py + (dy / dist) * disp)));
+
+                        const targetIdx = rowOffset + px;
+                        const sourceIdx = sy * cw + sx;
+                        tgt32[targetIdx] = src32[sourceIdx];
+                    }
+                }
+            }
+        }
+    }
+
+    if (hasRefraction) {
+        src32.set(tgt32);
+        ctx.putImageData(imgData, 0, 0);
+    }
+}
+
+// 수면 파장 드로잉 루프
+function renderRipples(ctx, cw, ch) {
+    if (ripples.length === 0) return;
+
+    ctx.save();
+    for (let i = ripples.length - 1; i >= 0; i--) {
+        const r = ripples[i];
+        r.radius += r.speed;
+        r.alpha -= r.decay;
+
+        if (r.alpha <= 0 || r.radius >= r.maxRadius) {
+            ripples.splice(i, 1);
+            continue;
+        }
+
+        const a = Math.max(0, r.alpha);
+
+        // 1) 밝은 능선 하이라이트 (물결의 솟아오른 빛 반사)
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+        ctx.lineWidth = r.waveWidth * 0.7;
+        ctx.strokeStyle = `rgba(255, 255, 255, ${a * 0.75})`;
+        ctx.stroke();
+
+        // 2) 어두운 골 그림자 (물결 안쪽 굴절 음영으로 수면의 입체감 생성)
+        if (r.radius > 5) {
+            ctx.beginPath();
+            ctx.arc(r.x, r.y, Math.max(0, r.radius - r.waveWidth * 0.7), 0, Math.PI * 2);
+            ctx.lineWidth = r.waveWidth * 0.5;
+            ctx.strokeStyle = `rgba(0, 0, 0, ${a * 0.4})`;
+            ctx.stroke();
+        }
+
+        // 3) 외곽 2차 동심원 잔물결
+        if (r.radius > 18) {
+            ctx.beginPath();
+            ctx.arc(r.x, r.y, r.radius * 0.65, 0, Math.PI * 2);
+            ctx.lineWidth = r.waveWidth * 0.4;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${a * 0.35})`;
+            ctx.stroke();
+        }
+
+        // 4) 중심부 미세 3차 파장
+        if (r.radius > 36) {
+            ctx.beginPath();
+            ctx.arc(r.x, r.y, r.radius * 0.38, 0, Math.PI * 2);
+            ctx.lineWidth = r.waveWidth * 0.25;
+            ctx.strokeStyle = `rgba(255, 255, 255, ${a * 0.18})`;
+            ctx.stroke();
+        }
+    }
+    ctx.restore();
+}
+
+/* =====================================================================
+   6. 메인 렌더링 루프 (순차적 왜곡 & 수면 파장)
+   ===================================================================== */
+function renderScene() {
+    if (currentScreenNum >= 2 && currentScreenNum <= 5) {
+        const hiddenVideo = document.getElementById("hiddenVideo");
+        const canvasElem = document.getElementById("canvas" + currentScreenNum);
+
+        if (hiddenVideo && canvasElem && hiddenVideo.readyState === 4) {
+            const ctx = canvasElem.getContext('2d', { willReadFrequently: true });
+            const cw = canvasElem.width = canvasElem.clientWidth || 600;
+            const ch = canvasElem.height = canvasElem.clientHeight || 400;
+
+            const rect = getCoverRect(hiddenVideo, cw, ch);
+
+            // --- 2번 페이지 : 클래식 맑은 거울 원본 + 미세 필름 그레인 ---
+            if (currentScreenNum === 2) {
+                ctx.save();
+                ctx.translate(cw, 0);
+                ctx.scale(-1, 1);
+                ctx.drawImage(hiddenVideo, rect.sx, rect.sy, rect.sw, rect.sh, 0, 0, cw, ch);
+                ctx.restore();
+
+                // 섬세한 앤틱 그레인 필름 느낌
+                ctx.fillStyle = "rgba(255, 255, 255, 0.03)";
+                for (let i = 0; i < 40; i++) {
+                    ctx.fillRect(Math.random() * cw, Math.random() * ch, 2, 2);
+                }
+            }
+
+            // --- 3번 페이지 : 1단계 왜곡 (부드러운 시간차 슬릿 스캔 지연) ---
+            else if (currentScreenNum === 3) {
+                const offCanvas = document.createElement('canvas');
+                offCanvas.width = cw;
+                offCanvas.height = ch;
+                const offCtx = offCanvas.getContext('2d');
+                offCtx.translate(cw, 0);
+                offCtx.scale(-1, 1);
+                offCtx.drawImage(hiddenVideo, rect.sx, rect.sy, rect.sw, rect.sh, 0, 0, cw, ch);
+
+                frameHistory.unshift(offCanvas);
+                if (frameHistory.length > 20) frameHistory.pop();
+
+                ctx.clearRect(0, 0, cw, ch);
+                const numSlices = 24;
+                const sliceHeight = ch / numSlices;
+
+                for (let i = 0; i < numSlices; i++) {
+                    const historyIndex = Math.min(i, frameHistory.length - 1);
+                    const sourceCanvas = frameHistory[historyIndex];
+                    const y = i * sliceHeight;
+                    ctx.drawImage(sourceCanvas, 0, y, cw, sliceHeight, 0, y, cw, sliceHeight);
+                }
+
+                // 은은한 스캔라인
+                ctx.fillStyle = "rgba(0, 0, 0, 0.06)";
+                for (let y = 0; y < ch; y += 4) {
+                    ctx.fillRect(0, y, cw, 1);
+                }
+            }
+
+            // --- 4번 페이지 : 2단계 왜곡 (파동 웨이브 슬릿 스캔 + 횡방향 일렁임, 뽀얀 효과 완전 제거 & 선명한 대비) ---
+            else if (currentScreenNum === 4) {
+                const offCanvas = document.createElement('canvas');
+                offCanvas.width = cw;
+                offCanvas.height = ch;
+                const offCtx = offCanvas.getContext('2d');
+                offCtx.translate(cw, 0);
+                offCtx.scale(-1, 1);
+                offCtx.drawImage(hiddenVideo, rect.sx, rect.sy, rect.sw, rect.sh, 0, 0, cw, ch);
+
+                frameHistory.unshift(offCanvas);
+                if (frameHistory.length > 36) frameHistory.pop();
+
+                ctx.clearRect(0, 0, cw, ch);
+                const numSlices = 45;
+                const sliceHeight = ch / numSlices;
+
+                for (let i = 0; i < numSlices; i++) {
+                    const waveOffset = Math.floor(Math.sin(i * 0.22 + Date.now() * 0.0035) * 6);
+                    const historyIndex = Math.min(Math.max(0, i + waveOffset), frameHistory.length - 1);
+                    const sourceCanvas = frameHistory[historyIndex];
+
+                    const y = i * sliceHeight;
+                    const xShift = Math.sin(i * 0.28 + Date.now() * 0.003) * 6;
+                    ctx.drawImage(sourceCanvas, 0, y, cw, sliceHeight, xShift, y, cw, sliceHeight);
+                }
+            }
+
+            // --- 5번 페이지 : 3단계 왜곡 (극대화된 파동 슬릿 스캔 + 32x32 점멸 모자이크 + 글리치 라인) ---
+            else if (currentScreenNum === 5) {
+                const offCanvas = document.createElement('canvas');
+                offCanvas.width = cw;
+                offCanvas.height = ch;
+                const offCtx = offCanvas.getContext('2d');
+                offCtx.translate(cw, 0);
+                offCtx.scale(-1, 1);
+                offCtx.drawImage(hiddenVideo, rect.sx, rect.sy, rect.sw, rect.sh, 0, 0, cw, ch);
+
+                frameHistory.unshift(offCanvas);
+                if (frameHistory.length > maxHistoryFrames) frameHistory.pop();
+
+                ctx.clearRect(0, 0, cw, ch);
+                const numSlices = 70;
+                const sliceHeight = ch / numSlices;
+
+                for (let i = 0; i < numSlices; i++) {
+                    const waveOffset = Math.floor(Math.sin(i * 0.35 + Date.now() * 0.006) * 12 + Math.cos(i * 0.15) * 5);
+                    const historyIndex = Math.min(Math.max(0, i + waveOffset), frameHistory.length - 1);
+                    const sourceCanvas = frameHistory[historyIndex];
+
+                    const y = i * sliceHeight;
+                    const xShift = Math.sin(i * 0.35 + Date.now() * 0.005) * 12;
+                    ctx.drawImage(sourceCanvas, 0, y, cw, sliceHeight, xShift, y, cw, sliceHeight);
+                }
+
+                // 2초마다 깜빡이는 얼굴 영역 모자이크 (32x32 픽셀)
+                if (isFaceMosaicOn) {
+                    const faceX = cw * 0.25;
+                    const faceY = ch * 0.1;
+                    const faceW = cw * 0.5;
+                    const faceH = ch * 0.7;
+
+                    const mosaicCols = 32; 
+                    const mosaicRows = 32;
+
+                    const tinyCanvas = document.createElement('canvas');
+                    tinyCanvas.width = mosaicCols;
+                    tinyCanvas.height = mosaicRows;
+                    const tinyCtx = tinyCanvas.getContext('2d');
+
+                    tinyCtx.drawImage(canvasElem, faceX, faceY, faceW, faceH, 0, 0, mosaicCols, mosaicRows);
+
+                    ctx.imageSmoothingEnabled = false;
+                    ctx.drawImage(tinyCanvas, 0, 0, mosaicCols, mosaicRows, faceX, faceY, faceW, faceH);
+                    ctx.imageSmoothingEnabled = true;
+
+                    // 모자이크 경계의 붉은 핏빛 글리치 테두리
+                    ctx.strokeStyle = "rgba(220, 20, 60, 0.4)";
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(faceX, faceY, faceW, faceH);
+                }
+
+                // 랜덤 글리치 라인
+                if (Math.random() < 0.18) {
+                    const gy = Math.random() * ch;
+                    const gh = Math.random() * 8 + 2;
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.22)";
+                    ctx.fillRect(0, gy, cw, gh);
+                }
+            }
+
+            // --- 모든 화면 공통 : 실시간 웹캠 영상 굴절 왜곡 & 수면 파장 광학 렌더링 ---
+            applyWaterRippleRefraction(ctx, cw, ch);
+            renderRipples(ctx, cw, ch);
+        }
+        animFrameId = requestAnimationFrame(renderScene);
+    }
+}
+
+/* =====================================================================
+   7. 5번 페이지 모자이크 타이머
+   ===================================================================== */
+function startMosaicTimer() {
+    stopMosaicTimer();
+    if (currentScreenNum === 5) {
+        mosaicTimer = setInterval(() => {
+            isFaceMosaicOn = !isFaceMosaicOn;
+        }, 2000);
+    }
+}
+
+function stopMosaicTimer() {
+    if (mosaicTimer) {
+        clearInterval(mosaicTimer);
+        mosaicTimer = null;
+    }
+    isFaceMosaicOn = false;
+}
+
+/* =====================================================================
+   8. 첫 페이지 카메라 초기화
+   ===================================================================== */
+async function initFirstScreenCamera() {
+    initDustParticles();
+    initMirrorTilt();
+    initFrostCanvas();
+
+    try {
+        if (navigator.mediaDevices?.getUserMedia) {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: false
+            });
+            const video1 = document.getElementById("webcam1");
+            const hiddenVideo = document.getElementById("hiddenVideo");
+            video1.srcObject = stream;
+            hiddenVideo.srcObject = stream;
+        }
+    } catch (error) {
+        console.log("웹캠 접근 권한 거부됨:", error);
+    }
+}
+
+/* =====================================================================
+   9. 1페이지 -> 2페이지 화면 진입
+   ===================================================================== */
+async function showCamera() {
+    if (isTransitioning) return;
+    isTransitioning = true;
+
+    initAudio();
+    playMirrorEntrySound();
+
+    const screen1 = document.getElementById("screen1");
+    const screen2 = document.getElementById("screen2");
+    const canvas2 = document.getElementById("canvas2");
+    const cameraText2 = document.getElementById("cameraText2");
+
+    screen1.classList.add("zoom-in");
+    await new Promise(resolve => setTimeout(resolve, 1150));
+
+    screen1.style.display = "none";
+    currentScreenNum = 2;
+    screen2.style.display = "flex";
+    screen2.classList.add("appear");
+    updateAmbientForScreen(2);
+
+    try {
+        if (!stream) {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: false
+            });
+            document.getElementById("hiddenVideo").srcObject = stream;
+        }
+
+        canvas2.style.display = "block";
+        cameraText2.style.display = "none";
+        await document.getElementById("hiddenVideo").play();
+
+        frameHistory = [];
+        stopMosaicTimer();
+        renderScene();
+        typeDialogue("diag2", dialogues[2]);
+
+    } catch (error) {
+        cameraText2.textContent = "카메라 권한을 허용해주세요.";
+        console.error(error);
+    }
+    isTransitioning = false;
+}
+
+/* =====================================================================
+   10. 선택지에 따른 화면 이동 (2 ~ 5)
+   ===================================================================== */
+async function goToScreen(targetNum) {
+    if (animFrameId) cancelAnimationFrame(animFrameId);
+    stopMosaicTimer();
+
+    for (let i = 2; i <= 5; i++) {
+        const scr = document.getElementById("screen" + i);
+        const cvs = document.getElementById("canvas" + i);
+        if (scr) {
+            scr.style.display = "none";
+            scr.classList.remove("appear");
+        }
+        if (cvs) cvs.style.display = "none";
+    }
+
+    currentScreenNum = targetNum;
+    updateAmbientForScreen(targetNum);
+
+    const targetScreen = document.getElementById("screen" + targetNum);
+    const canvasElem = document.getElementById("canvas" + targetNum);
+    const cameraTextElem = document.getElementById("cameraText" + targetNum);
+
+    targetScreen.style.display = "flex";
+    targetScreen.classList.add("appear");
+    targetScreen.classList.add("eerie-flash");
+    setTimeout(() => targetScreen.classList.remove("eerie-flash"), 450);
+
+    try {
+        if (!stream) {
+            stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: false
+            });
+            document.getElementById("hiddenVideo").srcObject = stream;
+        }
+
+        canvasElem.style.display = "block";
+        if (cameraTextElem) cameraTextElem.style.display = "none";
+        await document.getElementById("hiddenVideo").play();
+
+        frameHistory = [];
+        
+        if (targetNum === 5) {
+            startMosaicTimer();
+        }
+
+        renderScene();
+        typeDialogue("diag" + targetNum, dialogues[targetNum]);
+
+    } catch (error) {
+        if (cameraTextElem) cameraTextElem.textContent = "카메라 권한을 허용해주세요.";
+        console.error(error);
+    }
+}
+
+/* =====================================================================
+   11. 엔딩 분기 연출 (거울 균열 vs 탈출)
+   ===================================================================== */
+function triggerEnding(type) {
+    if (type === 'crack') {
+        playGlassShatterSound();
+        drawCrackedGlassAnimation(() => {
+            const trappedModal = document.getElementById("endingTrapped");
+            trappedModal.classList.add("show");
+        });
+    } else if (type === 'escape') {
+        const escapeModal = document.getElementById("endingEscaped");
+        escapeModal.classList.add("show");
+    }
+}
+
+// 거울에 금이 쩍쩍 가는 절묘한 캔버스 드로잉
+function drawCrackedGlassAnimation(callback) {
+    const canvas = document.getElementById("crackCanvas");
+    if (!canvas) { if (callback) callback(); return; }
+    const ctx = canvas.getContext("2d");
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+
+    const crackBranches = [];
+    const numBranches = 14;
+    for (let i = 0; i < numBranches; i++) {
+        const angle = (Math.PI * 2 / numBranches) * i + (Math.random() - 0.5) * 0.4;
+        crackBranches.push({
+            x: cx,
+            y: cy,
+            angle: angle,
+            length: Math.random() * 260 + 120,
+            curLen: 0,
+            speed: Math.random() * 16 + 12,
+            subCracks: []
+        });
+    }
+
+    let progress = 0;
+    function animateCrack() {
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+        ctx.shadowColor = "rgba(255, 50, 50, 0.8)";
+        ctx.shadowBlur = 8;
+        ctx.lineWidth = 2.2;
+
+        crackBranches.forEach(b => {
+            if (b.curLen < b.length) {
+                const nextLen = Math.min(b.length, b.curLen + b.speed);
+                const x1 = cx + Math.cos(b.angle) * b.curLen;
+                const y1 = cy + Math.sin(b.angle) * b.curLen;
+                const x2 = cx + Math.cos(b.angle + (Math.random() - 0.5) * 0.2) * nextLen;
+                const y2 = cy + Math.sin(b.angle + (Math.random() - 0.5) * 0.2) * nextLen;
+
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+
+                b.curLen = nextLen;
+            }
+        });
+
+        progress++;
+        if (progress < 25) {
+            requestAnimationFrame(animateCrack);
+        } else {
+            setTimeout(callback, 500);
+        }
+    }
+    animateCrack();
+}
+
+function resetToBeginning() {
+    document.getElementById("endingTrapped").classList.remove("show");
+    document.getElementById("endingEscaped").classList.remove("show");
+    const crackCanvas = document.getElementById("crackCanvas");
+    if (crackCanvas) {
+        const ctx = crackCanvas.getContext("2d");
+        ctx.clearRect(0, 0, crackCanvas.width, crackCanvas.height);
+    }
+    goToScreen1();
+}
+
+/* =====================================================================
+   12. 첫 화면으로 리셋
+   ===================================================================== */
+function goToScreen1() {
+    if (animFrameId) cancelAnimationFrame(animFrameId);
+    stopMosaicTimer();
+    if (typeTimer) clearInterval(typeTimer);
+    isTransitioning = false;
+
+    for (let i = 2; i <= 5; i++) {
+        const scr = document.getElementById("screen" + i);
+        const cvs = document.getElementById("canvas" + i);
+        if (scr) {
+            scr.style.display = "none";
+            scr.classList.remove("appear");
+        }
+        if (cvs) cvs.style.display = "none";
+    }
+
+    currentScreenNum = 1;
+    updateAmbientForScreen(1);
+
+    const screen1 = document.getElementById("screen1");
+    screen1.style.display = "flex";
+    screen1.classList.remove("zoom-in");
+}
+
+/* =====================================================================
+   13. 리스너 등록
+   ===================================================================== */
+window.addEventListener("DOMContentLoaded", () => {
+    initFirstScreenCamera();
+    startBgm();
+});
+
+window.addEventListener("click", () => {
+    // 사용자 첫 상호작용 시 오디오 엔진 및 BGM 깨우기
+    if (soundEnabled) {
+        initAudio();
+        if (bgmAudio.paused) {
+            startBgm();
+        }
+    }
+}, { once: true });
+
+window.addEventListener("pagehide", () => {
+    stopMosaicTimer();
+    if (typeTimer) clearInterval(typeTimer);
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+    }
+    if (audioCtx) {
+        audioCtx.close();
+    }
+    stopBgm();
+});
+
+</script>
+
+</body>
+</html>
